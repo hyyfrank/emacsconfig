@@ -10,6 +10,7 @@
   (setq visible-bell t)
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
   (column-number-mode)
+  (set-face-attribute 'default nil :font "Fira Code Retina" :height 180)
   (global-display-line-numbers-mode t)
   (dolist (mode '(org-mode-hook
                   term-mode-hook
@@ -34,14 +35,6 @@
       :config
       (which-key-mode))
   #+END_SRC
-* org mode
-#+BEGIN_SRC emacs-lisp    
-  (use-package org-bullets
-    :ensure t
-    :config
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
-  #+END_SRC
-  
 * Ace window
   #+BEGIN_SRC emacs-lisp
     (use-package ace-window
@@ -52,10 +45,10 @@
     (global-set-key [remap other-window] 'ace-window))
   #+END_SRC
 
-
 * ivy+counsel+helpful
 #+BEGIN_SRC emacs-lisp
 (use-package ivy
+  :ensure t
   :diminish
   :bind (("C-s" . swiper)
          :map ivy-minibuffer-map
@@ -74,11 +67,13 @@
   (ivy-mode 1))
 
 (use-package ivy-rich
+  :ensure t
   :after ivy
   :init
   (ivy-rich-mode 1))
 
 (use-package counsel
+  :ensure t
   :bind (("C-M-j" . 'counsel-switch-buffer)
          :map minibuffer-local-map
          ("C-r" . 'counsel-minibuffer-history))
@@ -88,6 +83,7 @@
   (counsel-mode 1))
 
 (use-package ivy-prescient
+  :ensure t
   :after counsel
   :custom
   (ivy-prescient-enable-filtering nil)
@@ -110,10 +106,10 @@
 #+END_SRC
 * flycheck
 #+BEGIN_SRC emacs-lisp
-  (use-package flycheck
-    :ensure t
-    :init
-  (global-flycheck-mode t))
+;;  (use-package flycheck
+;;    :ensure t
+;;    :init
+;;  (global-flycheck-mode t))
 #+END_SRC
 
 * python
@@ -152,17 +148,68 @@
 
 * doom modeline
 #+BEGIN_SRC emacs-lisp
-(use-package all-the-icons)
+(use-package all-the-icons
+  :ensure t
+)
 (use-package doom-modeline
+  :ensure t
   :init (doom-modeline-mode 1)
   :custom ((doom-modeline-height 15)))
 
 (use-package doom-themes
+  :ensure t
   :init (load-theme 'doom-dracula t))
 
 (use-package rainbow-delimiters
+  :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
 
 
 
 #+END_SRC
+* PROJECTILE AND MAGIT
+#+BEGIN_SRC emacs-lisp
+
+(use-package projectile
+  :diminish projectile-mode
+  :config (projectile-mode)
+  :custom ((projectile-completion-system 'ivy))
+  :bind-keymap
+  ("C-c p" . projectile-command-map)
+  :init
+  ;; NOTE: Set this to the folder where you keep your Git repos!
+  (when (file-directory-p "/opt/work/code")
+    (setq projectile-project-search-path '("/opt/work/code")))
+  (setq projectile-switch-project-action #'projectile-dired))
+
+(use-package counsel-projectile
+  :ensure t
+  :config (counsel-projectile-mode))
+
+(use-package magit
+  :ensure t
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+
+(setq evil-want-keybinding nil)
+ 
+(use-package evil-collection
+   :ensure t
+   :after magit)
+
+;; NOTE: Make sure to configure a GitHub token before using this package!
+;; - https://magit.vc/manual/forge/Token-Creation.html#Token-Creation
+;; - https://magit.vc/manual/ghub/Getting-Started.html#Getting-Started
+(use-package forge
+  :ensure t
+)
+#+END_SRC  
+* EGLOT C++ PYTHON JAVA
+  #+BEGIN_SRC emacs-lisp
+;;  (use-package eglot :ensure t)
+;;  (add-to-list 'eglot-server-programs '((c++-mode c-mode) "clangd"))
+;;  (add-hook 'c-mode-hook 'eglot-ensure)
+;;  (add-hook 'c++-mode-hook 'eglot-ensure)
+
+  
+  #+END_SRC
