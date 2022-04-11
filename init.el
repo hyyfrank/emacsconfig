@@ -1,51 +1,134 @@
-
 ;;; init.el --- <custom my emacs for c plus plus env>
 ;;; Commentary:
 ;;; Code:
-(package-initialize)
+
+
 (setq inhibit-startup-message t)
 
-(add-to-list 'package-archives
+(scroll-bar-mode -1)        ; Disable visible scrollbar
+(tool-bar-mode -1)          ; Disable the toolbar
+(tooltip-mode -1)           ; Disable tooltips
+(set-fringe-mode 10)        ; Give some breathing room
 
-	     '("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))
+(menu-bar-mode -1)            ; Disable the menu bar
 
-(add-to-list 'package-archives
+;; Set up the visible bell
+(setq visible-bell t)
+;; Monaco 14 is also good to go
+(set-face-attribute 'default nil  :font "Fira Code Retina" :height 180)
 
-  	     '("gnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/"))
+;; Make ESC quit prompts
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
-(package-initialize)
+;; Initialize package sources
 (require 'package)
 
+(setq package-archives '(("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
 
+(package-initialize)
+(unless package-archive-contents
+ (package-refresh-contents))
 
-;; Bootstrap `use-package'
-
+;; Initialize use-package on non-Linux platforms
 (unless (package-installed-p 'use-package)
+   (package-install 'use-package))
 
-(package-refresh-contents)
+(require 'use-package)
+(setq use-package-always-ensure t)
 
-(package-install 'use-package))
+;; add line number
+(column-number-mode)
+(global-display-line-numbers-mode t)
+(dolist (mode '(org-mode-hook
+                term-mode-hook
+		shell-mode-hook
+		eshell-mode-hook))
+	(add-hook mode(lambda () (display-line-numbers-mode 0))))
 
+;; support command to show on the right buffer
+(use-package command-log-mode)
 
+(use-package ivy
+  :diminish
+  :bind (("C-s" . swiper)
+         :map ivy-minibuffer-map
+         ("TAB" . ivy-alt-done)	
+         ("C-l" . ivy-alt-done)
+         ("C-j" . ivy-next-line)
+         ("C-k" . ivy-previous-line)
+         :map ivy-switch-buffer-map
+         ("C-k" . ivy-previous-line)
+         ("C-l" . ivy-done)
+         ("C-d" . ivy-switch-buffer-kill)
+         :map ivy-reverse-i-search-map
+         ("C-k" . ivy-previous-line)
+         ("C-d" . ivy-reverse-i-search-kill))
+  :config
+  (ivy-mode 1))
 
-(org-babel-load-file (expand-file-name "~/.emacs.d/setting.org"))  ;;从这里加载
+(use-package doom-modeline
+  :init (doom-modeline-mode 1)
+  :custom (
+	   (doom-modeline-height 15)
+      	   (doom-modeline-env-enable-python t)
+	   (doom-modeline-env-enable-javascript t)
+	   (doom-modeline-env-enable-react t)
+	   (doom-modeline-env-enable-c++ t)
+	   (doom-modeline-env-enable-node t)
+	  )
+  )
+;; doom-dracula is good to go
+(use-package doom-themes
+  :init (load-theme 'doom-dracula t))
 
-;; (org-babel-load-file (expand-file-name "~/.emacs.d/orgconf.org"))  ;;从这里加载
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+;; which key
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 0.1))
+;; ivy rich
+(use-package ivy-rich
+  :after ivy
+  :init
+  (ivy-rich-mode 1))
 
+;;(use-package counsel
+;;  :bind (("M-x" . counsel-M-x)
+;;	 ("C-x b" . counsel-ibuffer)
+;;	 ("C-x C-f" . counsel-find-file)
+;;	 :map minibuffer-local-map
+;;o`	 ("C-r" . 'counsel-minibufer-history)))
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(eglot lsp-mode forge magit counsel-projectile rainbow-delimiters dumb-jump ivy-prescient doom-themes ivy-rich doom-modeline all-the-icons xcscope 0x0 0blayout posframe zenburn-theme which-key use-package try solarized-theme org-bullets counsel auto-complete ace-window)))
+(use-package counsel
+  :bind (("C-M-j" . 'counsel-switch-buffer)
+         :map minibuffer-local-map
+         ("C-r" . 'counsel-minibuffer-history))
+  :custom
+  (counsel-linux-app-format-function #'counsel-linux-app-format-function-name-only)
+  :config
+  (counsel-mode 1))
 
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-;;; init.el ends here
+(use-package ivy-prescient
+  :after counsel
+  :custom
+  (ivy-prescient-enable-filtering nil)
+  :config
+  ;; Uncomment the following line to have sorting remembered across sessions!
+  ;(prescient-persist-mode 1)
+  (ivy-prescient-mode 1))
 
+(use-package helpful
+  :commands (helpful-callable helpful-variable helpful-command helpful-key)
+  :custom
+  (counsel-describe-function-function #'helpful-callable)
+  (counsel-describe-variable-function #'helpful-variable)
+  :bind
+  ([remap describe-function] . counsel-describe-function)
+  ([remap describe-command] . helpful-command)
+  ([remap describe-variable] . counsel-describe-variable)
+  ([remap describe-key] . helpful-key))
